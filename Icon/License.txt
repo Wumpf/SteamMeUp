@@ -1,0 +1,9 @@
+Icon derived from:
+
+Xbox icon:
+http://www.iconarchive.com/show/windows-8-icons-by-icons8/Logos-Xbox-icon.html
+(https://icons8.com/license/)
+
+Steam icon:
+http://www.iconarchive.com/show/papirus-apps-icons-by-papirus-team/steam-icon.html
+(GNU General Public License v3.0)
