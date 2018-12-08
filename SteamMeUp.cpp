@@ -24,10 +24,29 @@ typedef struct
 } XINPUT_STATE_EX;
 int(__stdcall *XInputGetStateEx) (int, XINPUT_STATE_EX*);
 
-wchar_t steamInstallationPath[MAX_PATH];
+namespace
+{
+	wchar_t steamInstallationPath[MAX_PATH];
 
-bool InitTray();
-void RunWinApiMessageLoop();
+	void StartSteamInBigPictureMode()
+	{
+		wchar_t steamBigPictureStartupCommandLine[MAX_PATH * 2];
+		wsprintf(steamBigPictureStartupCommandLine, L"%s -bigpicture", steamInstallationPath);
+
+		LOG(LogLevel::INFO, "Launching steam in big picture mode via \"" << steamBigPictureStartupCommandLine << "\"...");
+
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		ZeroMemory(&si, sizeof(si));
+		si.cb = sizeof(si);
+		ZeroMemory(&pi, sizeof(pi));
+
+		if (CreateProcess(NULL, steamBigPictureStartupCommandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+			LOG(LogLevel::INFO, "Started steam successfully.");
+		else
+			LOG(LogLevel::FAIL, "Failed to start steam: " << GetLastErrorAsString());
+	}
+}
 
 bool Startup()
 {
@@ -66,27 +85,7 @@ bool Startup()
 	// Deprecated.
 	//XInputEnable(TRUE);
 
-
-	return InitTray();
-}
-
-void StartSteamInBigPictureMode()
-{
-	wchar_t steamBigPictureStartupCommandLine[MAX_PATH * 2];
-	wsprintf(steamBigPictureStartupCommandLine, L"%s -bigpicture", steamInstallationPath);
-
-	LOG(LogLevel::INFO, "Launching steam in big picture mode via \"" << steamBigPictureStartupCommandLine  << "\"...");
-
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-	ZeroMemory(&pi, sizeof(pi));
-
-	if (CreateProcess(NULL, steamBigPictureStartupCommandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-		LOG(LogLevel::INFO, "Started steam successfully.");
-	else
-		LOG(LogLevel::FAIL, "Failed to start steam: " << GetLastErrorAsString());
+	return true;
 }
 
 void RunXInputMessageLoop(std::atomic<bool>& exited)
@@ -128,25 +127,4 @@ void RunXInputMessageLoop(std::atomic<bool>& exited)
 	}
 
 	//CloseHandle(waitableTimer);
-}
-
-#ifdef _CONSOLE
-int main()
-#else
-int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
-#endif
-{
-	if (Startup())
-	{
-		std::atomic<bool> exited = false;
-		std::thread xinputThread(RunXInputMessageLoop, std::ref(exited));
-
-		RunWinApiMessageLoop();
-
-		exited = true;
-		xinputThread.join();
-	}
-	else
-		return 1;
-	return 0;
 }

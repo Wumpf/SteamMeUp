@@ -88,8 +88,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Log.cpp" />
-    <ClCompile Include="SteamMeUp.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Tray.cpp" />
+    <ClCompile Include="SteamMeUp.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h" />
