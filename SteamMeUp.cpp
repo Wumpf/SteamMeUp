@@ -1,8 +1,9 @@
 #include <windows.h>
 #include <Xinput.h>
-#include <cstdio>
-#include <string>
-#include <sstream>
+
+#include <thread>
+#include <atomic>
+
 #include "resource.h"
 #include "Log.h"
 
@@ -26,6 +27,7 @@ int(__stdcall *XInputGetStateEx) (int, XINPUT_STATE_EX*);
 wchar_t steamInstallationPath[MAX_PATH];
 
 bool InitTray();
+void RunWinApiMessageLoop();
 
 bool Startup()
 {
@@ -39,11 +41,11 @@ bool Startup()
 					steamInstallationPath,
 					&bufferSize) == ERROR_SUCCESS)
 	{
-		LOG(LogLevel::FAIL, "Found steam installation at: " << ToUtf8(steamInstallationPath));
+		LOG(LogLevel::INFO, "Found steam installation at: " << ToUtf8(steamInstallationPath));
 	}
 	else
 	{
-		LOG(LogLevel::INFO, "Failed to find steam installation!");
+		LOG(LogLevel::FAIL, "Failed to find steam installation!");
 		return false;
 	}
 
@@ -87,14 +89,15 @@ void StartSteamInBigPictureMode()
 		LOG(LogLevel::FAIL, "Failed to start steam: " << GetLastErrorAsString());
 }
 
-void RunLoop()
+void RunXInputMessageLoop(std::atomic<bool>& exited)
 {
 	const int updateFrequencyHz = 10;
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_IDLE);
 
 	XINPUT_STATE_EX oldState[XUSER_MAX_COUNT];
 	ZeroMemory(oldState, sizeof(oldState));
 
-	while (true)
+	while(!exited)
 	{
 		for (int i = 0; i < XUSER_MAX_COUNT; ++i)
 		{
@@ -122,7 +125,15 @@ void RunLoop()
 int main()
 {
 	if (Startup())
-		RunLoop();
+	{
+		std::atomic<bool> exited = false;
+		std::thread xinputThread(RunXInputMessageLoop, std::ref(exited));
+
+		RunWinApiMessageLoop();
+
+		exited = true;
+		xinputThread.join();
+	}
 	else
 		return 1;
 	return 0;
