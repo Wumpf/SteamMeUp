@@ -95,6 +95,7 @@
   <ItemGroup>
     <ClInclude Include="Log.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SteamMeUp.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

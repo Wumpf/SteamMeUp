@@ -1,15 +1,11 @@
 #include <windows.h>
 
 #include <thread>
-#include <atomic>
 
 #include "resource.h"
 #include "Log.h"
 
-bool Startup();
-bool InitTray();
-void RunWinApiMessageLoop();
-void RunXInputMessageLoop(std::atomic<bool>& exited);
+#include "SteamMeUp.h"
 
 #ifdef _CONSOLE
 int main()
@@ -17,7 +13,7 @@ int main()
 int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #endif
 {
-	if (Startup() && InitTray())
+	if (InitXInputAndFindSteam() && InitTray())
 	{
 		std::atomic<bool> exited = false;
 		std::thread xinputThread(RunXInputMessageLoop, std::ref(exited));

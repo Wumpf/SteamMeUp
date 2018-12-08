@@ -1,9 +1,12 @@
 #include <Windows.h>
 #include "Log.h"
+#include "SteamMeUp.h"
 #include "resource.h"
 
 #define TRAY_CALLBACK_MESSAGE (WM_USER + 200)
-#define TRAY_CONTEXMENU_EXIT (WM_USER + 400)
+#define TRAY_CONTEXMENU_STEAMBIGPIC (WM_USER + 401)
+#define TRAY_CONTEXMENU_STEAM		(WM_USER + 402)
+#define TRAY_CONTEXMENU_EXIT		(WM_USER + 403)
 
 namespace
 {
@@ -18,6 +21,12 @@ namespace
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
+			case TRAY_CONTEXMENU_STEAMBIGPIC:
+				StartSteam(true);
+				break; 
+			case TRAY_CONTEXMENU_STEAM:
+				StartSteam(false);
+				break;
 			case TRAY_CONTEXMENU_EXIT:
 				DestroyWindow(hWnd);
 				break;
@@ -83,8 +92,11 @@ bool InitTray()
 	}
 
 	hPopupMenu = CreatePopupMenu();
-	//AppendMenuW(hPopupMenu, MF_STRING | MF_GRAYED | MF_DISABLED, TRAY_CONTEXMENU_EXIT, L"Some text");
-	//AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hPopupMenu, MF_STRING | MF_GRAYED | MF_DISABLED, TRAY_CONTEXMENU_EXIT, g_steamInstallationPath);
+	AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hPopupMenu, MF_STRING, TRAY_CONTEXMENU_STEAMBIGPIC, L"Start Steam in Big Picture Mode");
+	AppendMenuW(hPopupMenu, MF_STRING, TRAY_CONTEXMENU_STEAM, L"Start Steam");
+	AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hPopupMenu, MF_STRING, TRAY_CONTEXMENU_EXIT, L"Exit");
 
 	return true;

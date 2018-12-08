@@ -4,6 +4,7 @@
 #include <thread>
 #include <atomic>
 
+#include "SteamMeUp.h"
 #include "resource.h"
 #include "Log.h"
 
@@ -24,43 +25,44 @@ typedef struct
 } XINPUT_STATE_EX;
 int(__stdcall *XInputGetStateEx) (int, XINPUT_STATE_EX*);
 
-namespace
+wchar_t g_steamInstallationPath[MAX_PATH] = L"";
+
+
+void StartSteam(bool bigPicture)
 {
-	wchar_t steamInstallationPath[MAX_PATH];
+	wchar_t steamStartupCommandLine[MAX_PATH * 2];
+	if (bigPicture)
+		wsprintf(steamStartupCommandLine, L"%s -bigpicture", g_steamInstallationPath);
+	else
+		lstrcpyW(steamStartupCommandLine, g_steamInstallationPath);
 
-	void StartSteamInBigPictureMode()
-	{
-		wchar_t steamBigPictureStartupCommandLine[MAX_PATH * 2];
-		wsprintf(steamBigPictureStartupCommandLine, L"%s -bigpicture", steamInstallationPath);
+	LOG(LogLevel::INFO, "Launching steam in big picture mode via \"" << steamStartupCommandLine << "\"...");
 
-		LOG(LogLevel::INFO, "Launching steam in big picture mode via \"" << steamBigPictureStartupCommandLine << "\"...");
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
 
-		STARTUPINFO si;
-		PROCESS_INFORMATION pi;
-		ZeroMemory(&si, sizeof(si));
-		si.cb = sizeof(si);
-		ZeroMemory(&pi, sizeof(pi));
-
-		if (CreateProcess(NULL, steamBigPictureStartupCommandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
-			LOG(LogLevel::INFO, "Started steam successfully.");
-		else
-			LOG(LogLevel::FAIL, "Failed to start steam: " << GetLastErrorAsString());
-	}
+	if (CreateProcess(NULL, steamStartupCommandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+		LOG(LogLevel::INFO, "Started steam successfully.");
+	else
+		LOG(LogLevel::FAIL, "Failed to start steam: " << GetLastErrorAsString());
 }
 
-bool Startup()
+bool InitXInputAndFindSteam()
 {
 	// Query steam installation location.
-	DWORD bufferSize = sizeof(steamInstallationPath);
+	DWORD bufferSize = sizeof(g_steamInstallationPath);
 	if (RegGetValue(HKEY_CURRENT_USER,
 					L"Software\\Valve\\Steam",
 					L"SteamExe",
 					RRF_RT_REG_SZ,
 					NULL,
-					steamInstallationPath,
+					g_steamInstallationPath,
 					&bufferSize) == ERROR_SUCCESS)
 	{
-		LOG(LogLevel::INFO, "Found steam installation at: " << ToUtf8(steamInstallationPath));
+		LOG(LogLevel::INFO, "Found steam installation at: " << ToUtf8(g_steamInstallationPath));
 	}
 	else
 	{
@@ -116,7 +118,7 @@ void RunXInputMessageLoop(std::atomic<bool>& exited)
 			if ((oldState[i].wButtons & XINPUT_GAMEPAD_GUIDE_BUTTON) != 0 && 
 				(newState.wButtons    & XINPUT_GAMEPAD_GUIDE_BUTTON) == 0)
 			{
-				StartSteamInBigPictureMode();
+				StartSteam(true);
 			}
 
 			oldState[i] = newState;
