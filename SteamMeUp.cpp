@@ -3,9 +3,8 @@
 #include <cstdio>
 #include <string>
 #include <sstream>
-#include <locale>
-#include <codecvt>
 #include "resource.h"
+#include "Log.h"
 
 // Undocumented button constants
 #define XINPUT_GAMEPAD_GUIDE_BUTTON 0x0400
@@ -25,46 +24,6 @@ typedef struct
 int(__stdcall *XInputGetStateEx) (int, XINPUT_STATE_EX*);
 
 wchar_t steamInstallationPath[MAX_PATH];
-
-enum class LogLevel
-{
-	INFO,
-	FAIL,
-};
-
-void Log(LogLevel level, const std::string message)
-{
-#ifdef NDEBUG
-	if (level != LogLevel::FAIL)
-		return;
-#else
-	printf(message.c_str());
-#endif
-	OutputDebugStringA(message.c_str());
-}
-
-#define LOG(level, message) do { std::stringstream format; format << message << "\n"; Log(level, format.str()); } while(false)
-
-std::string ToUtf8(wchar_t* string)
-{
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> utf16conv;
-	return utf16conv.to_bytes(string);
-}
-
-std::string GetLastErrorAsString()
-{
-	DWORD errorMessageID = ::GetLastError();
-	if (errorMessageID == 0)
-		return std::string();
-
-	LPSTR messageBuffer = nullptr;
-	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-									NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
-
-	std::string message(messageBuffer, size);
-	LocalFree(messageBuffer);
-	return message;
-}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
