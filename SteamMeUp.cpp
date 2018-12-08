@@ -122,7 +122,11 @@ void RunXInputMessageLoop(std::atomic<bool>& exited)
 	}
 }
 
+#ifdef _CONSOLE
 int main()
+#else
+int CALLBACK WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+#endif
 {
 	if (Startup())
 	{
