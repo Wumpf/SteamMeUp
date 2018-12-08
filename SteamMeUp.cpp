@@ -91,11 +91,15 @@ void StartSteamInBigPictureMode()
 
 void RunXInputMessageLoop(std::atomic<bool>& exited)
 {
-	const int updateFrequencyHz = 10;
+	// Requires to press the button a bit longer but in return we keep the process more idle.
+	// General issue is that there seems to be no way to run XInput event based :(
+	const int updateFrequencyHz = 4;
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_IDLE);
 
 	XINPUT_STATE_EX oldState[XUSER_MAX_COUNT];
 	ZeroMemory(oldState, sizeof(oldState));
+
+	//HANDLE waitableTimer = CreateWaitableTimerW(nullptr, FALSE, nullptr);
 
 	while(!exited)
 	{
@@ -118,8 +122,12 @@ void RunXInputMessageLoop(std::atomic<bool>& exited)
 
 			oldState[i] = newState;
 		}
+
 		Sleep(1000 / updateFrequencyHz);
+		//WaitForSingleObject(waitableTimer, 1000 / updateFrequencyHz);
 	}
+
+	//CloseHandle(waitableTimer);
 }
 
 #ifdef _CONSOLE
