@@ -1,8 +1,6 @@
 #include "Log.h"
 
-#include <debugapi.h>
-typedef void* HWND;
-#include <WinBase.h>
+#include <Windows.h>
 #include <locale>
 #include <codecvt>
 
@@ -15,6 +13,9 @@ void Log(LogLevel level, const std::string& message)
 	printf(message.c_str());
 #endif
 	OutputDebugStringA(message.c_str());
+
+	if (level == LogLevel::FAIL)
+		MessageBoxA(NULL, message.c_str(), NULL, MB_OK | MB_ICONERROR);
 }
 
 std::string ToUtf8(wchar_t* string)
